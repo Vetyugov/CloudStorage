@@ -1,19 +1,11 @@
 package com.geekbrains.netty;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import com.geekbrains.Command;
-import com.geekbrains.FileMessage;
-import com.geekbrains.FileRequest;
-import com.geekbrains.ListRequest;
+import com.geekbrains.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +13,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CommandHandler extends SimpleChannelInboundHandler<Command> {
 
+    private static Path currentPath;
+
     private static final Path ROOT = Paths.get("server-sep-2021", "root");
+
+
+    public CommandHandler() throws IOException {
+        //TODO Сюда ещё добавить userName - его получаем как ответ от сервиса авторизации
+        currentPath = Paths.get("server-sep-2021", "root");
+        if(!Files.exists(currentPath)){
+            Files.createDirectory(currentPath);
+        }
+    }
+
+    //Когда мы подключились, сразу отправляем 2 команды (где мы сейчас на сервере и список файлов на сервере)
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws IOException {
+        ctx.writeAndFlush(new ListResponse(currentPath));
+        ctx.writeAndFlush(new PathResponse((currentPath.toString())));
+
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
+        log.debug("Получена команда" + cmd.getType());
         // TODO: 23.09.2021 Разработка системы команд
         switch (cmd.getType()) {
             case FILE_MESSAGE:
@@ -36,21 +48,35 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
                 log.info("сохранили файл");
                 ctx.writeAndFlush(new FileRequest("OK"));
                 break;
-            case LIST_RESPONSE:
+            case LIST_REQUEST:
                 log.info("Получили запрос на обновление...");
-                ctx.writeAndFlush(new ListRequest(getFilesInfo()));
+                ctx.writeAndFlush(new ListResponse(currentPath));
+                break;
+            case FILE_REQUEST:
+                log.info("Запрос: Перевести текущий файл в Path");
+                FileRequest fileRequest = (FileRequest) cmd;
+                ctx.writeAndFlush( new FileMessage(currentPath.resolve(fileRequest.getName())) );
+                break;
+            case PATH_UP_REQUEST:
+                log.info("Запрос: Перейти на папку выше");
+                if (currentPath.getParent()!= null){
+                    currentPath = currentPath.getParent();
+                }
+                ctx.writeAndFlush(new PathResponse(currentPath.toString()));
+                ctx.writeAndFlush(new ListResponse(currentPath));
+                break;
+            case PATH_IN_REQUEST:
+                PathInRequest request = (PathInRequest) cmd;
+                //Новый path достаем из дирректории внутри request
+                Path newPath = currentPath.resolve(request.getDir());
+                //Если это папка - передаем обновленные данные на клиент
+                if (Files.isDirectory(newPath)){
+                    currentPath = newPath;
+                    ctx.writeAndFlush(new PathResponse(currentPath.toString()));
+                    ctx.writeAndFlush(new ListResponse(currentPath));
+                }
                 break;
         }
-
-    }
-    private List<String> getFilesInfo() throws Exception {
-        String list = Files.list(ROOT)
-                .map(this::resolveFileType)
-                .collect(Collectors.joining("\n")) + "\n";
-        list = list.trim();
-        String[] array = list.split("\n");
-        return new ArrayList<String>(Arrays.asList(array));
-
 
     }
     private String resolveFileType(Path path) {

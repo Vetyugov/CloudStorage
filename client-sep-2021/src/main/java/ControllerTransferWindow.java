@@ -4,6 +4,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import com.geekbrains.*;
@@ -23,49 +24,54 @@ import lombok.extern.slf4j.Slf4j;
 public class ControllerTransferWindow implements Initializable {
 
     private static final String ROOT_DIR = "client-sep-2021/root";
-//    private static byte[] buffer = new byte[1024];
     public ListView<String> clientList;
-    public TextField input;
     public ListView<String> serverList;
+    public TextField clientPath;
+    public TextField serverPath;
     private ObjectDecoderInputStream is;
     private ObjectEncoderOutputStream os;
+    private Path currentDir;
 
 
-    @FXML
-    private void sendFile() throws IOException {
-        try {
-            String fileName = clientList.getSelectionModel().getSelectedItem();
-            log.debug("Отправляю файл" + fileName);
-            Path file = Paths.get(ROOT_DIR, fileName);
-            os.writeObject(new FileMessage(file));
-            os.flush();
-            log.debug("Файл отправлен");
-        } catch (IOException e){
-            log.error("Ошибка отправки файла", e);
-        }
 
-    }
-
-    //Обновить структуру хранилища
-    @FXML
-    private void reload (){
-        try {
-            os.writeObject(new ListResponse());
-            os.flush();
-            log.debug("Запрос на обновление отправлен");
-        }catch (IOException e){
-            log.error("Ошибка отправки запроса ls");
-        }
-
-    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            fillFilesInCurrentDir();
+            fillClientView();
             Socket socket = new Socket("localhost", 8189);
             os = new ObjectEncoderOutputStream(socket.getOutputStream());
             is = new ObjectDecoderInputStream(socket.getInputStream());
+
+            //По двойному нажатию на папку
+            clientList.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2) {
+                    String item = clientList.getSelectionModel().getSelectedItem();
+                    Path newPath = currentDir.resolve(item);
+                    if(Files.isDirectory(newPath)){
+                        currentDir = newPath;
+                        try{
+                            fillClientView();
+                        } catch (IOException exception){
+                            log.error("Ошибка обновления списка файлов" , exception);
+                        }
+                    }
+                }
+            });
+
+            serverList.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2) {
+                    String item = clientList.getSelectionModel().getSelectedItem();
+                    try {
+                        os.writeObject(new PathInRequest(item));
+                        os.flush();
+                    } catch (IOException exception ){
+                        log.error("Ошибка отправки запроса на сервер" , exception);
+                    }
+                }
+            });
+
+
             Thread daemon = new Thread(() -> {
                 try {
                     while (true) {
@@ -75,14 +81,24 @@ public class ControllerTransferWindow implements Initializable {
                         switch (msg.getType()) {
                             //Ответ сервера, на получение файла
                             case FILE_REQUEST:
-                                String text = ((FileRequest)msg).getMsg();
+                                String text = ((FileRequest)msg).getName();
                                 log.debug("received: {}" + text);
-                                Platform.runLater(()-> input.setText(text));
+                                Platform.runLater(()-> clientPath.setText(text));
                                 break;
-                            case LIST_REQUEST:
-                                ObservableList<String> listOfFiles = FXCollections.observableList( ((ListRequest)msg).getList());
-                                serverList.setItems(listOfFiles);
-                                log.debug("received: {}" + listOfFiles.toString());
+
+                            case LIST_RESPONSE:
+                                //Обновляем файловую структуру сервера
+                                fillServerView(((ListResponse)msg).getList());
+                                break;
+
+                            case PATH_RESPONSE:
+                                String path = ((PathResponse)msg).getPath();
+                                Platform.runLater(()-> serverPath.setText(path) );
+                                break;
+
+                            case FILE_MESSAGE:
+                                FileMessage fileMessage = (FileMessage) msg;
+                                Files.write(currentDir.resolve(fileMessage.getName()) , fileMessage.getBytes());
                                 break;
 
                         }
@@ -98,18 +114,102 @@ public class ControllerTransferWindow implements Initializable {
         }
     }
 
-    private void fillFilesInCurrentDir() throws IOException {
+    /**
+     * Метод заполняет listView клиента
+     */
+    private void fillClientView() throws IOException {
+        currentDir = Paths.get("client-sep-2021" , "root");
+        clientPath.setText(currentDir.toString());
         clientList.getItems().clear();
         clientList.getItems().addAll(
                 Files.list(Paths.get(ROOT_DIR))
                         .map(p -> p.getFileName().toString())
                         .collect(Collectors.toList())
         );
-        clientList.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                String item = clientList.getSelectionModel().getSelectedItem();
-                input.setText(item);
-            }
+    }
+
+    /**
+     * Метод заполняет listView сервера
+     * @param fileNames - список имен файлов
+     */
+    private void fillServerView(List<String> fileNames){
+        Platform.runLater(()-> {
+            serverList.getItems().clear();
+            serverList.getItems().addAll(fileNames);
         });
+    }
+
+    /**
+     * Событие по нажатию на кнопку UP сервера
+     */
+    @FXML
+    private void serverPathUp() {
+        try {
+            os.writeObject(new PathUpRequest());
+            os.flush();
+        }catch ( IOException e ){
+            log.error("Ошибка отправки запроса PathUpRequest на сервер. " , e);
+        }
+    }
+
+    /**
+     * Событие по нажатию на кнопку UP клиента
+     */
+    @FXML
+    private void clientPathUp() {
+        try {
+            currentDir = currentDir.getParent();
+            clientPath.setText(currentDir.toString());
+            fillClientView();
+        }catch ( IOException e ){
+            log.error("Не удалось обновить listView клиента " , e);
+        }
+    }
+
+    /**
+     * Событие по нажатию на кнопку загрузки файла с сервера
+     */
+    @FXML
+    private void download (){
+        try {
+            String fileName = serverList.getSelectionModel().getSelectedItem();
+            os.writeObject(new FileRequest(fileName));
+            os.flush();
+        } catch (IOException e){
+            log.error("Не удалось отправить запрос для загрузки файла с сервера FileRequest" , e);
+        }
+    }
+
+    /**
+     * Событие по нажатию на кнопку загрузки файла на сервер
+     */
+    @FXML
+    private void sendFile() {
+        try {
+            String fileName = clientList.getSelectionModel().getSelectedItem();
+            log.debug("Отправляю файл" + fileName);
+            Path file = Paths.get(ROOT_DIR, fileName);
+            os.writeObject(new FileMessage(file));
+            os.flush();
+            log.debug("Файл отправлен");
+        } catch (IOException e){
+            log.error("Ошибка отправки файла", e);
+        }
+
+    }
+
+    /**
+     * Событие по нажатию на кнопку обновления структуры сервера
+     */
+    @FXML
+    private void reload (){
+        try {
+            os.writeObject(new ListRequest());
+            os.flush();
+            log.debug("Запрос на обновление отправлен");
+        }catch (IOException e){
+            log.error("Ошибка отправки запроса ls" , e);
+        }
+
     }
 }
