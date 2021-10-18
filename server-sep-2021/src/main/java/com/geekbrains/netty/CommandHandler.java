@@ -53,8 +53,9 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command> {
                 ctx.writeAndFlush(new ListResponse(currentPath));
                 break;
             case FILE_REQUEST:
-                log.info("Запрос: Перевести текущий файл в Path");
+
                 FileRequest fileRequest = (FileRequest) cmd;
+                log.info("Запрос: Перевести текущий файл в Path: " + fileRequest.getName()  +" ==" + currentPath.toString());
                 ctx.writeAndFlush( new FileMessage(currentPath.resolve(fileRequest.getName())) );
                 break;
             case PATH_UP_REQUEST:
