@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ControllerTransferWindow">
+<GridPane stylesheets="@../CSS/darkTheme.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="transferWindow.ControllerTransferWindow">
    <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" />
       <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
@@ -31,7 +31,10 @@
                   <Insets bottom="5.0" left="5.0" right="5.0" />
                </VBox.margin>
                <children>
-                  <TextField fx:id="clientPath" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="clientPath" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin></TextField>
                   <Button mnemonicParsing="false" onMouseClicked="#clientPathUp" text="up" />
                </children>
             </HBox>
@@ -51,7 +54,10 @@
             </ListView>
             <HBox alignment="CENTER">
                <children>
-                  <TextField fx:id="serverPath" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="serverPath" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin></TextField>
                   <Button mnemonicParsing="false" onMouseClicked="#serverPathUp" text="up" />
                </children>
                <VBox.margin>
@@ -62,9 +68,18 @@
       </VBox>
       <VBox alignment="CENTER" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
          <children>
-            <Button fx:id="btn_toClient" mnemonicParsing="false" onMouseClicked="#sendFile" text="-&gt;" />
-            <Button fx:id="btn_toServer" mnemonicParsing="false" onMouseClicked="#download" text="&lt;-" />
-            <Button mnemonicParsing="false" onMouseClicked="#reload" text="Reload" />
+            <Button fx:id="btn_toClient" mnemonicParsing="false" onMouseClicked="#sendFile" text="-&gt;">
+               <VBox.margin>
+                  <Insets bottom="5.0" />
+               </VBox.margin></Button>
+            <Button fx:id="btn_toServer" mnemonicParsing="false" onMouseClicked="#download" text="&lt;-">
+               <VBox.margin>
+                  <Insets bottom="5.0" />
+               </VBox.margin></Button>
+            <Button mnemonicParsing="false" onMouseClicked="#reload" text="Reload">
+               <VBox.margin>
+                  <Insets bottom="5.0" />
+               </VBox.margin></Button>
             <Button mnemonicParsing="false" text="Enter" />
          </children>
       </VBox>

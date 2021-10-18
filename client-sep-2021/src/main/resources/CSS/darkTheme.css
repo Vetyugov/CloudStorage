@@ -1,0 +1,125 @@
+.button:hover {
+    -fx-background-color: red;
+}
+.button {
+    -fx-background-color:  #797e8a;
+    -fx-text-fill: white;
+}
+
+.transparent-button {
+    -fx-background-color: transparent;
+}
+
+.label {
+    -fx-background-color: #4c5363;
+    -fx-text-fill: white;
+}
+#log {
+    -fx-text-fill: red;
+}
+/*
+#menu-bar{
+    -fx-background-color: #abaeb3;
+}
+*/
+
+
+/* The menu bar itself */
+
+/*
+.menu-bar {
+    -fx-background-color: #abaeb3;
+    }
+    */
+
+/* Styles the text on a menu item */
+
+.menu .label {
+    -fx-background-color: transparent;
+}
+/*
+.menu-item .label{
+      -fx-background-color: #abaeb3;
+}
+*/
+
+
+.menu-bar .label {
+    -fx-text-fill: white;
+    -fx-padding: 2.0px;
+
+}
+.menu-bar .menu-button:hover, .menu-bar .menu-button:focused, .menu-bar .menu-button:showing {
+    -fx-background: #abaeb3 ;
+    -fx-opacity: 0.5;
+    -fx-text-fill: white;
+}
+
+.menu-item {
+    -fx-background: grey ;
+}
+.menu-item .label{
+    -fx-text-fill: white;
+    -fx-background: transparent;
+}
+.menu-item .label:hover{
+    -fx-background: black ;
+    -fx-text-fill: white;
+}
+.context-menu {
+    -fx-background-color:#abaeb3 ;
+    -fx-border-width: 0.2px;
+    -fx-border-color: black;
+    /** -fx-background-insets: 0.0, 1.0, 2.0;
+    -fx-background-radius: 0.0 6.0 6.0 6.0, 0.0 5.0 5.0 5.0, 0.0 4.0 4.0 4.0;
+    -fx-padding: 0.333333em 0.083333em 0.666667em 0.083333em;
+    -fx-opacity: 0.9;*/
+}
+
+
+.combo-box{
+    -fx-text-fill: white ;
+    -fx-font-size: 10px;
+}
+.combo-box .arrow-button{
+    -fx-background-color:#797e8a;
+    -fx-border-style:none;
+    -fx-text-fill: white ;
+}
+
+.combo-box .list-cell{
+    -fx-background-color:#797e8a;
+    -fx-text-fill: white ;
+}
+
+.combo-box .combo-box-popup .list-view, .combo-box .combo-box-popup .list-cell {
+    -fx-background-color: #797e8a ;
+    -fx-text-fill: white ;
+
+}
+.combo-box .combo-box-popup .list-cell:hover {
+    -fx-text-fill: white ;
+    -fx-background-color: #abaeb3 ;
+}
+
+.check-box {
+    -fx-text-fill: white;
+}
+
+.tool-bar {
+    -fx-background-color: #4c5363;
+}
+
+.list-view {
+    -fx-background-color: #797e8a;
+}
+
+.table-view {
+    -fx-background-color: #d4d4d4;
+}
+
+/*Фон всей сцены */
+.root {
+    -fx-background-color: #4c5363;
+}
+

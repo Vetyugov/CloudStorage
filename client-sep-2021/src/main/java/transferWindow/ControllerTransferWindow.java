@@ -1,3 +1,5 @@
+package transferWindow;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
@@ -59,6 +61,7 @@ public class ControllerTransferWindow implements Initializable {
                 }
             });
 
+            //Событие по двойному нажатию на серверную папку
             serverList.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2) {
                     String item = clientList.getSelectionModel().getSelectedItem();
@@ -126,6 +129,14 @@ public class ControllerTransferWindow implements Initializable {
                         .map(p -> p.getFileName().toString())
                         .collect(Collectors.toList())
         );
+    }
+
+    /**
+     * Метод отслеживает двойное нажатие на окно сервера, что приводит к переходу в выбранную папку
+     */
+    @FXML
+    private void serverDoubleClick(){
+
     }
 
     /**
